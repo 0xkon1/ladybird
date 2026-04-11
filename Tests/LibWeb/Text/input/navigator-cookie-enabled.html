@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<script src="include.js"></script>
+<script>
+    test(() => {
+        println(`typeof cookieEnabled: ${typeof navigator.cookieEnabled}`);
+        println(`cookieEnabled in navigator: ${"cookieEnabled" in navigator}`);
+        // Since this test is served over HTTP, cookies are enabled by default.
+        println(`Cookies enabled: ${navigator.cookieEnabled}`);
+    });
+</script>

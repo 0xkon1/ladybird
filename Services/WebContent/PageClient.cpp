@@ -45,6 +45,7 @@ namespace WebContent {
 
 static PageClient::UseSkiaPainter s_use_skia_painter = PageClient::UseSkiaPainter::GPUBackendIfAvailable;
 static bool s_is_headless { false };
+static bool s_initial_cookies_enabled { true };
 
 GC_DEFINE_ALLOCATOR(PageClient);
 
@@ -61,6 +62,16 @@ bool PageClient::is_headless() const
 void PageClient::set_is_headless(bool is_headless)
 {
     s_is_headless = is_headless;
+}
+
+bool PageClient::initial_cookies_enabled()
+{
+    return s_initial_cookies_enabled;
+}
+
+void PageClient::set_initial_cookies_enabled(bool enabled)
+{
+    s_initial_cookies_enabled = enabled;
 }
 
 GC::Ref<PageClient> PageClient::create(JS::VM& vm, PageHost& page_host, u64 id)
@@ -520,6 +531,8 @@ void PageClient::page_did_change_favicon(Gfx::Bitmap const& favicon)
 
 Optional<Core::SharedVersion> PageClient::page_did_request_document_cookie_version(Core::SharedVersionIndex document_index)
 {
+    if (!page().is_cookies_enabled())
+        return {};
     return Core::get_shared_version(m_document_cookie_version_buffer, document_index);
 }
 
@@ -542,21 +555,30 @@ void PageClient::page_did_receive_document_cookie_version_index(Web::UniqueNodeI
 
 Vector<HTTP::Cookie::Cookie> PageClient::page_did_request_all_cookies_webdriver(URL::URL const& url)
 {
+    if (!page().is_cookies_enabled())
+        return {};
     return client().did_request_all_cookies_webdriver(url);
 }
 
 Vector<HTTP::Cookie::Cookie> PageClient::page_did_request_all_cookies_cookiestore(URL::URL const& url)
 {
+    if (!page().is_cookies_enabled())
+        return {};
     return client().did_request_all_cookies_cookiestore(url);
 }
 
 Optional<HTTP::Cookie::Cookie> PageClient::page_did_request_named_cookie(URL::URL const& url, String const& name)
 {
+    if (!page().is_cookies_enabled())
+        return {};
     return client().did_request_named_cookie(url, name);
 }
 
 HTTP::Cookie::VersionedCookie PageClient::page_did_request_cookie(URL::URL const& url, HTTP::Cookie::Source source)
 {
+    if (!page().is_cookies_enabled())
+        return {};
+
     auto response = client().send_sync_but_allow_failure<Messages::WebContentClient::DidRequestCookie>(m_id, url, source);
     if (!response) {
         dbgln("WebContent client disconnected during DidRequestCookie. Exiting peacefully.");
@@ -567,6 +589,9 @@ HTTP::Cookie::VersionedCookie PageClient::page_did_request_cookie(URL::URL const
 
 void PageClient::page_did_set_cookie(URL::URL const& url, HTTP::Cookie::ParsedCookie const& cookie, HTTP::Cookie::Source source)
 {
+    if (!page().is_cookies_enabled())
+        return;
+
     auto response = client().send_sync_but_allow_failure<Messages::WebContentClient::DidSetCookie>(url, cookie, source);
     if (!response) {
         dbgln("WebContent client disconnected during DidSetCookie. Exiting peacefully.");

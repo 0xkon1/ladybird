@@ -25,8 +25,10 @@ PageHost::PageHost(ConnectionFromClient& client)
 PageClient& PageHost::create_page()
 {
     m_pages.set(m_next_id, PageClient::create(Web::Bindings::main_thread_vm(), *this, m_next_id));
+    auto& page_client = *m_pages.get(m_next_id).value();
+    page_client.page().set_is_cookies_enabled(PageClient::initial_cookies_enabled());
     ++m_next_id;
-    return *m_pages.get(m_next_id - 1).value();
+    return page_client;
 }
 
 void PageHost::remove_page(Badge<PageClient>, u64 index)

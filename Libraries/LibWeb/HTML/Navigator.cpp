@@ -13,6 +13,7 @@
 #include <LibWeb/Bindings/NavigatorPrototype.h>
 #include <LibWeb/Clipboard/Clipboard.h>
 #include <LibWeb/CredentialManagement/CredentialsContainer.h>
+#include <LibWeb/DOM/Document.h>
 #include <LibWeb/Geolocation/Geolocation.h>
 #include <LibWeb/HTML/Navigator.h>
 #include <LibWeb/HTML/Scripting/Environments.h>
@@ -44,6 +45,19 @@ void Navigator::initialize(JS::Realm& realm)
     WEB_SET_PROTOTYPE_FOR_INTERFACE(Navigator);
     Base::initialize(realm);
     NavigatorGamepadPartial::check_for_connected_gamepads();
+}
+
+// https://html.spec.whatwg.org/multipage/system-state.html#dom-navigator-cookieenabled
+bool Navigator::cookie_enabled() const
+{
+    // The cookieEnabled attribute must return true if the user agent attempts to handle cookies
+    // according to the HTTP State Management Mechanism, and false if it ignores cookie change requests.
+    auto const& window = as<HTML::Window>(HTML::current_global_object());
+    if (!window.page().is_cookies_enabled())
+        return false;
+
+    // NOTE: A cookie-averse document will also report cookies as not enabled.
+    return !window.associated_document().is_cookie_averse();
 }
 
 // https://html.spec.whatwg.org/multipage/system-state.html#dom-navigator-pdfviewerenabled

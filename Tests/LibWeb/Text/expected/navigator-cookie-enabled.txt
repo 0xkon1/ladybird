@@ -1,0 +1,3 @@
+typeof cookieEnabled: boolean
+cookieEnabled in navigator: true
+Cookies enabled: true

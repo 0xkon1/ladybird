@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<script src="include.js"></script>
+<script>
+    test(() => {
+        // When served over HTTP, we should be able to successfully set and read cookies.
+        document.cookie = "test_cookie=hello; path=/";
+        println(`Cookie content: '${document.cookie}'`);
+    });
+</script>
